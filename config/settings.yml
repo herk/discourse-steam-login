@@ -1,0 +1,7 @@
+plugins:
+  steam_login_enabled:
+    default: false
+    client: true
+  steam_login_api_key:
+    default: ''
+    client: false

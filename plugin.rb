@@ -1,10 +1,12 @@
 # name: Steam authentication with Discourse
 # about: Authenticate with Discourse with Steam
-# version: 1.1.1
+# version: 1.1.2
 # author: J. de Faye
 # template author: S. Saffron
 
-require File.expand_path('../omniauth-steam.rb', __FILE__)
+enabled_site_setting :steam_login_enabled
+
+require_relative 'lib/omniauth/strategies/steam.rb'
 
 class SteamAuthenticator < ::Auth::Authenticator
 
@@ -51,12 +53,16 @@ class SteamAuthenticator < ::Auth::Authenticator
   end
 
   def register_middleware(omniauth)
-    omniauth.provider :steam, ENV['STEAM_WEB_API_KEY']
+    omniauth.provider :steam,
+      setup: lambda { |env|
+        env["omniauth.strategy"].options[:api_key] = SiteSetting.steam_login_api_key
+      }
   end
 
 end
 
 auth_provider title: 'with Steam',
+    enabled_setting: 'steam_login_enabled',
     message: 'Sign in via Steam (Make sure pop up blockers are not enabled).',
     frame_width: 960,
     frame_height: 800,

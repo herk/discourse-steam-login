@@ -1,6 +1,6 @@
 # name: omniauth-steam
-# about: omniauth-steam
-# version: 1.0.3
+# url: https://github.com/reu/omniauth-steam
+# version: 1.0.5
 # author: Rodrigo Navarro
 
 require 'omniauth-openid'
@@ -18,6 +18,7 @@ module OmniAuth
       uid { steam_id }
 
       info do
+        begin
         {
           "nickname" => player["personaname"],
           "name"     => player["realname"],
@@ -28,10 +29,19 @@ module OmniAuth
             "FriendList" => friend_list_url
           }
         }
+        rescue MultiJson::ParseError => exception
+          fail!(:steamError, exception)
+          {}
+        end
       end
 
       extra do
-        { "raw_info" => player }
+        begin
+          { "raw_info" => player }
+        rescue MultiJson::ParseError => exception
+          fail!(:steamError, exception)
+          {}
+        end
       end
 
       private
@@ -45,15 +55,22 @@ module OmniAuth
       end
 
       def steam_id
-        openid_response.display_identifier.split("/").last
+        @steam_id ||= begin
+                        claimed_id = openid_response.display_identifier.split('/').last
+                        expected_uri = "http://steamcommunity.com/openid/id/#{claimed_id}"
+                        if openid_response.endpoint.claimed_id != expected_uri
+                          raise 'Steam Claimed ID mismatch!'
+                        end
+                        claimed_id
+                      end
       end
 
       def player_profile_uri
-        URI.parse("http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=#{options.api_key}&steamids=#{steam_id}")
+        URI.parse("https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=#{options.api_key}&steamids=#{steam_id}")
       end
 
       def friend_list_url
-        URI.parse("http://api.steampowered.com/ISteamUser/GetFriendList/v0001/?key=#{options.api_key}&steamid=#{steam_id}&relationship=friend")
+        URI.parse("https://api.steampowered.com/ISteamUser/GetFriendList/v0001/?key=#{options.api_key}&steamid=#{steam_id}&relationship=friend")
       end
     end
   end

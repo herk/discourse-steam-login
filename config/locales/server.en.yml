@@ -1,0 +1,4 @@
+en:
+  site_settings:
+    steam_login_enabled: 'Enable Steam authentication, requires steam_login_api_key'
+    steam_login_api_key: 'Steam Web API Key for Steam authentication, generated at https://steamcommunity.com/dev/apikey'
